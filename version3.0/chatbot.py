@@ -10,12 +10,17 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.llms import Ollama
 from langchain.chains import create_history_aware_retriever
 from langchain_core.prompts import MessagesPlaceholder
+from langchain_community.chat_message_histories import ChatMessageHistory
+from langchain_core.chat_history import BaseChatMessageHistory
+from langchain_core.runnables.history import RunnableWithMessageHistory
 
 model_name = 'llama3.1:latest'
 embeddings_model_name =  "all-MiniLM-L6-v2"
 
 model = Ollama(model = model_name)
 embeddings = HuggingFaceEmbeddings(model_name=embeddings_model_name)
+
+store = {}
 
 def History_Chain():
     contextualize_q_system_prompt = (
@@ -59,3 +64,15 @@ def Question_Answer_Chain():
                                                 )
     question_answer_chain = create_stuff_documents_chain(model, qa_prompt)
     return question_answer_chain
+
+def RAG_Chain():
+    history_aware_retriever = History_Chain()
+    question_answer_chain = Question_Answer_Chain()
+    return create_retrieval_chain(history_aware_retriever, question_answer_chain)
+
+def get_session_history(session_id: str) -> BaseChatMessageHistory:
+    if session_id not in store:
+        store[session_id] = ChatMessageHistory()
+    return store[session_id]
+
+
