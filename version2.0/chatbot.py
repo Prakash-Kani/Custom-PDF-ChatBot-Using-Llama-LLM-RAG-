@@ -1,9 +1,12 @@
 
 from langchain.chains import RetrievalQA
-from langchain.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-from langchain.vectorstores import Chroma
-from langchain.llms import Ollama
+from langchain_community.vectorstores import Chroma
+from langchain_community.llms import Ollama
+from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_community.chat_message_histories import ChatMessageHistory
+from langchain.memory import ConversationBufferMemory
 import chromadb
 import os
 import argparse
@@ -30,6 +33,8 @@ def parse_arguments():
 
     return parser.parse_args()
 
+# Initialize message history
+message_history = ChatMessageHistory()
 
 def QA_Retrieval_LLM():
     # Parse the command line arguments
@@ -44,7 +49,9 @@ def QA_Retrieval_LLM():
 
     llm = Ollama(model=model, callbacks=callbacks)
 
-    retrievalQA  = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever, return_source_documents= not args.hide_source)
+    retrievalQA  = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever, return_source_documents= not args.hide_source,
+                                               verbose = True, chain_type_kwargs = {'verbose': True, 
+                                                                                    'memory': ConversationBufferMemory(memory_key='history', input_key='question')})
     return retrievalQA 
 
 
