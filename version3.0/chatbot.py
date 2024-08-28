@@ -20,6 +20,10 @@ embeddings_model_name =  "all-MiniLM-L6-v2"
 model = Ollama(model = model_name)
 embeddings = HuggingFaceEmbeddings(model_name=embeddings_model_name)
 
+db = Chroma(persist_directory='db', embedding_function=embeddings)
+
+retriever = db.as_retriever(search_kwargs={"k": 3})
+
 store = {}
 
 def History_Chain():
@@ -50,8 +54,8 @@ def Question_Answer_Chain():
                         "You are an assistant for question-answering tasks. "
                         "Use the following pieces of retrieved context to answer "
                         "the question. If you don't know the answer, say that you "
-                        "don't know. Use three sentences maximum and keep the "
-                        "answer concise."
+                        "don't know."
+                        "The user is greeting you. Respond appropriately as a friendly assistant."
                         "\n\n"
                         "{context}"
                     )
@@ -74,5 +78,15 @@ def get_session_history(session_id: str) -> BaseChatMessageHistory:
     if session_id not in store:
         store[session_id] = ChatMessageHistory()
     return store[session_id]
+
+def Conversational_Chain():
+    rag_chain = RAG_Chain()
+    return RunnableWithMessageHistory(
+                                        rag_chain,
+                                        get_session_history,
+                                        input_messages_key="input",
+                                        history_messages_key="chat_history",
+                                        output_messages_key="answer",
+                                    )
 
 
