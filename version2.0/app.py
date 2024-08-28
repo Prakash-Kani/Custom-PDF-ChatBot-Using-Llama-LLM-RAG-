@@ -17,7 +17,7 @@ st.set_page_config(page_title = "Custom PDF ChatBot",
 st.cache_resource()
 def model():
     return QA_Retrieval_LLM()
-# llm = model()
+llm = model()
 args = parse_arguments()
 
 
@@ -75,3 +75,4 @@ with col2:
                             st.session_state.messages.append({"role": "assistant", "content": answer})
                         else:
                             st.warning("Please upload a PDF file first.")
+
