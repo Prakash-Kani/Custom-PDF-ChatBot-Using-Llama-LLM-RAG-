@@ -20,9 +20,9 @@ embeddings_model_name =  "all-MiniLM-L6-v2"
 model = Ollama(model = model_name)
 embeddings = HuggingFaceEmbeddings(model_name=embeddings_model_name)
 
-db = Chroma(persist_directory='db', embedding_function=embeddings)
+db = Chroma(persist_directory='physics-chemical', embedding_function=embeddings)
 
-retriever = db.as_retriever(search_kwargs={"k": 3})
+retriever = db.as_retriever()
 
 store = {}
 
@@ -36,7 +36,7 @@ def History_Chain():
                                     )
 
     contextualize_q_prompt = ChatPromptTemplate.from_messages(
-                                                                [
+                                                                [   
                                                                     ("system", contextualize_q_system_prompt),
                                                                     MessagesPlaceholder("chat_history"),
                                                                     ("human", "{input}"),
@@ -50,15 +50,28 @@ def History_Chain():
 
 
 def Question_Answer_Chain():
+    # system_prompt = (
+    #                     "You are an assistant for question-answering tasks. "
+    #                     "Use the following pieces of retrieved context to answer "
+    #                     "the question. If you don't know the answer, say that you "
+    #                     "don't know."
+    #                      "If the context does not contain the answer, respond with 'The information is not available in the provided context.'"
+    #                     "The user is greeting you. Respond appropriately as a friendly assistant."
+    #                     "\n\n"
+    #                     "{context}"
+    #                 )
+
     system_prompt = (
-                        "You are an assistant for question-answering tasks. "
-                        "Use the following pieces of retrieved context to answer "
-                        "the question. If you don't know the answer, say that you "
-                        "don't know."
-                        "The user is greeting you. Respond appropriately as a friendly assistant."
-                        "\n\n"
-                        "{context}"
-                    )
+        "You are an assistant for question-answering tasks. "
+        "Use the following pieces of retrieved context to answer "
+        "the question. If you don't know the answer, say that you "
+        "don't know. Use three sentences maximum and keep the "
+        "answer concise."
+        # "If the context does not contain the answer, respond with 'The information is not available in the provided context.'"
+        # "The user is greeting you. Respond appropriately as a friendly assistant."
+        "\n\n"
+        "{context}"
+    )   
     qa_prompt = ChatPromptTemplate.from_messages(
                                                     [
                                                         ("system", system_prompt),
@@ -77,6 +90,8 @@ def RAG_Chain():
 def get_session_history(session_id: str) -> BaseChatMessageHistory:
     if session_id not in store:
         store[session_id] = ChatMessageHistory()
+        # store[session_id].add_user_message("What is the title of the given context?")
+        store[session_id].add_ai_message("Let's dive into chemical bonding and molecular structure. What specific topic or question can I help you with today?")
     return store[session_id]
 
 def Conversational_Chain():
@@ -88,5 +103,4 @@ def Conversational_Chain():
                                         history_messages_key="chat_history",
                                         output_messages_key="answer",
                                     )
-
 
