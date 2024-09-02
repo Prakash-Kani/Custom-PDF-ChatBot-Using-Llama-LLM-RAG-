@@ -1,6 +1,7 @@
 import streamlit as st
 import os
 import glob
+import pandas as pd
 
 from chatbot import Conversational_Chain
 
@@ -12,7 +13,8 @@ st.set_page_config(page_title = "Custom PDF ChatBot",
                    initial_sidebar_state = "expanded",
                    menu_items = None)
 
-
+dic = {'user_name':[], 'SessionID':[], 'Prompt':[], 'LLM_Response':[]}
+df = pd.DataFrame(dic)
 
 st.cache_resource()
 def model():
@@ -53,13 +55,14 @@ with tab2:
     message_container = st.container(height=500, border=True)
     # Initialize chat history
     if "messages" not in st.session_state:
-        st.session_state.messages = []
-
+        st.session_state.messages = [{"role": "assistant", "content":"Let's dive into chemical bonding and molecular structure. What specific topic or question can I help you with today?"}]
+    # st.session_state.messages.append(
     # Display chat messages from history on app rerun
     for message in st.session_state.messages:
         with message_container.chat_message(message["role"]):
             st.markdown(message["content"])
-
+        # with message_container.chat_message('assistant'):
+    
     # React to user input
     if prompt := st.chat_input("Enter Your Prompt here..."):
         # Display user message in chat message container
@@ -80,8 +83,10 @@ with tab2:
                             st.markdown(response)
                             # st.markdown(docs)
                             st.session_state.messages.append({"role": "assistant", "content": response})
+                            df.loc[len(df.index)] = [user_name, session_id, prompt, response]
                         else:
                             st.warning("Please upload a PDF file first.")
+    st.table(df)
 
-    
+
 
